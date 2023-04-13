@@ -1,0 +1,208 @@
+---
+title: "plots"
+author: "Xinge Zhang"
+date: "2023-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+########### Required Packages ###########
+packages = c("stars","starsExtra", "abind","tigris","tidycensus","dyplyr",
+             "bayesplot", "lme4","RcppEigen","knitr","yardstick",
+             "tidyverse", "tidyr", "broom", "caret", "dials", "doParallel", "e1071", "earth",
+             "ggrepel", "glmnet", "ipred", "klaR", "kknn", "pROC", "rpart", "randomForest",
+             "sessioninfo", "tidymodels","ranger", "recipes", "workflows", "themis","xgboost",
+             "sf", "nngeo", "mapview","raster")
+
+
+########### Define Functions ###########
+
+Load.fun <- function(x) { 
+  x <- as.character(x) 
+  if(isTRUE(x %in% .packages(all.available=TRUE))) { 
+    eval(parse(text=paste("require(", x, ")", sep=""))) 
+    print(paste(c(x, " : already installed; requiring"), collapse=''))
+  } else { 
+    #update.packages()
+    print(paste(c(x, " : not installed; installing"), collapse=''))
+    eval(parse(text=paste("install.packages('", x, "')", sep=""))) 
+    print(paste(c(x, " : installed and requiring"), collapse=''))
+    eval(parse(text=paste("require(", x, ")", sep=""))) 
+  } 
+} 
+
+for(i in seq_along(packages)){
+  packge <- as.character(packages[i])
+  Load.fun(packge)
+}
+
+
+plotTheme <- function(base_size = 12, title_size = 12) {
+  theme(
+   text = element_text( color = "black"),
+   plot.title = element_text(size = title_size, colour = "black"), 
+        plot.subtitle = element_text(face="italic"),
+       plot.caption = element_text(hjust=0),
+         axis.ticks = element_blank(),
+         panel.background = element_blank(),
+         panel.grid.minor = element_line("grey90", size = 0.01),
+         panel.grid.major = element_line("grey90", size = 0.01),
+         panel.border = element_rect(colour = "white" , fill=NA, size=0),
+         strip.background = element_rect(color = "white",fill='white'),
+         strip.text = element_text(size=12),
+         axis.title = element_text(size=12),
+         axis.text = element_text(size=10),
+         plot.background = element_blank(),
+         legend.background = element_blank(),
+         legend.title = element_text(colour = "black", face = "italic"),
+         legend.text = element_text(colour = "black", face = "italic"),
+         strip.text.x = element_text(size = 8)
+       )
+   }
+
+mapTheme <- theme(plot.title =element_text(size=12),
+                  plot.subtitle = element_text(size=8),
+                  plot.caption = element_text(size = 6),
+                  axis.line=element_blank(),
+                  axis.text.x=element_blank(),
+                  axis.text.y=element_blank(),
+                  axis.ticks=element_blank(),
+                  axis.title.x=element_blank(),
+                  axis.title.y=element_blank(),
+                  panel.background=element_blank(),
+                  panel.border=element_blank(),
+                  panel.grid.major=element_line(colour = 'transparent'),
+                  panel.grid.minor=element_blank(),
+                  legend.direction = "vertical", 
+                  legend.position = "right",
+                  legend.key.height = unit(1, "cm"), legend.key.width = unit(0.2, "cm"))
+
+palette2 <- c("#41b6c4","#253494")
+palette4 <- c("#a1dab4","#41b6c4","#2c7fb8","#253494")
+palette5 <- c("#ffffcc","#a1dab4","#41b6c4","#2c7fb8","#253494")
+palette10 <- c("#f7fcf0","#e0f3db","#ccebc5","#a8ddb5","#7bccc4",
+                        "#4eb3d3","#2b8cbe","#0868ac","#084081","#f7fcf0")
+```
+
+```{r}
+# read in files and prepare
+port14_df <- port14_df %>% 
+    mutate(
+      lcre = case_when(lcchange == -1 ~ 1,
+                       lcchange == 1 ~ 0,
+                       lcchange == 0 ~ 0)
+    ) %>% 
+    mutate(
+      lcchange = as.factor(lcchange),
+      lcre = as.factor(lcre)
+    )%>%
+  rename(
+    originallc = port_51740_landcover_2014.tif
+  )
+numericVars <- 
+  port14_df %>%
+  dplyr::select(is.numeric) %>% 
+  na.omit()
+nonnumeric <-
+  port14_df %>%
+  dplyr::select(-names(numericVars)) %>% 
+  na.omit()
+lcVars <- c("originallc","lc","slope","soil","canopy","road","other", "shrub","water","imperv")
+censusVars <- c("popchange","pctwhitechange","Unitchange","MedHHIncchange","Area")
+
+```
+
+
+```{r correlation, fig.width= 12,fig.high =12}
+
+ggcorrplot(
+  round(cor(numericVars), 1), 
+  p.mat = cor_pmat(numericVars),
+  colors = c('#253494', "#ffffff",'#ffffcc'),
+  lab = TRUE,
+  hc.order = TRUE,
+  method = 'circle', 
+  insig='blank', 
+  sig.level = 0.1,
+  type="upper") +  
+  labs(title = "Correlation across numeric variables")+
+       #, caption = 'Figure 2.2.1') +
+  #theme(label.position='bottom')+
+ plotTheme()
+```
+
+
+```{r pressure, echo=FALSE, fig.width= 10,fig.height=5}
+port14_df %>%
+  dplyr::select(lcVars,lcre) %>%
+    gather(Variable, value, -lcre) %>%
+    ggplot() + 
+    geom_density(aes(value, color=lcre), fill = "transparent") + 
+    facet_wrap(~Variable, scales = "free",ncol=5) +
+    scale_color_manual(values = palette2) +
+    labs(title = "Feature distributions landcover change from pervious to imprevious vs. other conditions",
+         subtitle = "Portmouth 2014 - 2018",
+         caption = '0 represent change from no change/ change from imprevious to pervious 1 represent change from pervious to imprevious')+
+   theme(legend.position = "bottom") +
+   plotTheme()
+```
+
+```{r pressure, echo=FALSE, fig.width= 10,fig.height=3}
+port14_df %>%
+  dplyr::select(censusVars,lcre) %>%
+    gather(Variable, value, -lcre) %>%
+    ggplot() + 
+    geom_density(aes(value, color=lcre), fill = "transparent") + 
+    facet_wrap(~Variable, scales = "free",ncol=5) +
+    scale_color_manual(values = palette2) +
+    labs(title = "Feature distributions landcover change from pervious to imprevious vs. other conditions",
+         subtitle = "Portmouth 2014 - 2018",
+         caption = '0 represent change from no change/ change from imprevious to pervious 1 represent change from pervious to imprevious')+
+   theme(legend.position = "bottom") +
+   plotTheme()
+```
+
+```{r, fig.width= 10,fig.height=5}
+port14_df%>%
+  dplyr::select(censusVars,lcre) %>%
+  gather(Variable, value, -lcre) %>%
+    ggplot(aes(lcre, value, fill=lcre)) + 
+      geom_bar(position = "dodge", stat = "summary", fun = "mean") + 
+      facet_wrap(~Variable, scales = "free") +
+      scale_fill_manual(values = palette2) +
+      labs(x="landcover change", y="Value", 
+        title = "Feature distributions landcover change from pervious to imprevious vs. other conditions",
+         subtitle = "Portmouth 2014 - 2018",
+         caption = '0 represent change from no change/ change from imprevious to pervious 1 represent change from pervious to imprevious')+
+      theme()+plotTheme()
+```
+
+
+
+```{r, fig.width= 10,fig.height=5}
+port14_df%>%
+  dplyr::select(lcVars,lcre) %>%
+  gather(Variable, value, -lcre) %>%
+    ggplot(aes(lcre, value, fill=lcre)) + 
+      geom_bar(position = "dodge", stat = "summary", fun = "mean") + 
+      facet_wrap(~Variable, scales = "free", ncol = 5) +
+      scale_fill_manual(values = palette2) +
+      labs(x="landcover change", y="Value", 
+        title = "Feature distributions landcover change from pervious to imprevious vs. other conditions",
+         subtitle = "Portmouth 2014 - 2018",
+         caption = '0 represent change from no change/ change from imprevious to pervious 1 represent change from pervious to imprevious')+
+      theme()+plotTheme()
+```
+
+
+
+
+```{r}
+# Calculate the ROC curve
+lr_roc <- roc_curve(pred, as.numeric(port14_df['lcre']))
+
+# Plot the ROC curve
+autoplot(lr_roc, data = test, color = "diabetes")
+```
+
