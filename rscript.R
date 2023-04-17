@@ -133,8 +133,8 @@ port_14_10_rc <- port_14_10_crop %>%
   mutate(
     originallc =  port_51740_landcover_2014.tif,
     lc = case_when(
-    port_51740_landcover_2014.tif < 6  ~ 0, # impervious
-    port_51740_landcover_2014.tif >= 6 ~ 1 # previous
+    port_51740_landcover_2014.tif < 6  ~ 0, # previous
+    port_51740_landcover_2014.tif >= 6 ~ 1 # impervious
   ))
 port_18_10_rc <- port_18_10_crop %>% 
   mutate(
@@ -764,10 +764,12 @@ apply_model <- function(data) {
     )
   
   # Sample data
-  data_sample <- sample_n(data, 500000)
+  balanced_data <-  data %>%
+         group_by(lcre) %>%
+         sample_n(min(table(data$lcre)), replace = FALSE)
   
   # Initial split for training and test
-  data_split <- initial_split(data_sample, strata = "lcchange", prop = 0.75)
+  data_split <- initial_split(balanced_data, strata = "lcchange", prop = 0.75)
   data_train <- training(data_split)
   data_test <- testing(data_split)
   
@@ -779,6 +781,8 @@ apply_model <- function(data) {
     update_role(GEOID, new_role = "GEOID") %>%
     update_role(lcchange, new_role = "lcchange") %>%
     step_ns(x, y, options = list(df = 2))
+  
+  
   
   # Model specifications
   glm_plan <- logistic_reg() %>%
@@ -928,7 +932,20 @@ saveRDS(predict_df3,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/outp
 rf_full_mod <- extract_fit_parsnip(full_fit_rf)
 saveRDS(rf_full_mod,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/best_rf1_jame.rds')
 
+imp <- importance(rf_full_mod$fit, type = 1)
+if (is.matrix(imp)) {
+  imp_df <- data.frame(variable = rownames(imp), importance = imp[, 1])
+} else {
+  imp_df <- data.frame(variable = names(imp), importance = imp)
+}
 
+
+ggplot(imp_df, aes(x = reorder(variable, importance), y = importance, fill = "#41b6c4", alpha=0.5)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_identity() +
+  labs(x = "Variable", y = "Importance") +
+  ggtitle("Variable Importance")
 #############################################################################################################################
 #############################################  --------------------  ########################################################
 ############################################# |      PORTMOUTH     | ########################################################
