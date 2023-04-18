@@ -110,6 +110,12 @@ port_18_10 <- st_warp(port_18, cellsize = 10, crs = st_crs(port_18))
 jame_14_10 <- st_warp(jame_14, cellsize = 10, crs = st_crs(jame_14))
 jame_18_10 <- st_warp(jame_18, cellsize = 10, crs = st_crs(jame_18))
 
+port_area <- port_area %>% 
+  st_transform(crs = st_crs(port_14))
+jame_area <- jame_area %>% 
+  st_transform(crs = st_crs(jame_14))
+isle_area <- isle_area %>% 
+  st_transform(crs = st_crs(isle_14))
 
 # Crop the resampled raster image to the test area
 port_14_10_crop <- st_crop(port_14_10, port_area)
@@ -124,6 +130,9 @@ isle_18_10_crop <- st_crop(isle_18, isle_area)
 port_change <- c(port_18_10_crop - port_14_10_crop)%>%
   mutate(lcchange = case_when(port_51740_landcover_2018.tif != 0 ~ 1,
                               port_51740_landcover_2018.tif != 0 ~ 0))
+jame_change <- c(jame_18_10_crop - jame_14_10_crop)%>%
+  mutate(lcchange = case_when(jame_51095_landcover_2018.tif != 0 ~ 1,
+                              jame_51095_landcover_2014.tif!= 0 ~ 0))
 isle_change <- c(isle_18_10_crop - isle_14_10_crop)%>%
   mutate(lcchange = case_when(islelc_18_10x10.tif != 0 ~ 1,
                               islelc_18_10x10.tif != 0 ~ 0))
@@ -459,6 +468,17 @@ port14 <- cbind(
     rename(lcchange = lc )
 )
 
+port14bc <- cbind(
+  as.data.frame(port_14_canopy)['canopy'],
+  as.data.frame(port_14_road)['road'],
+  as.data.frame(port_14_other)['other'],
+  as.data.frame(port_14_shrub)['shrub'],
+  as.data.frame(port_14_water)['water'],
+  as.data.frame(port_14_10_rc)[c('x','y','lc')] %>%
+    rename(imperv = lc )
+)
+
+saveRDS(port14bc,'~/Github/Precision-Forecast/undecided/output/port14bc.rds')
 port18 <- cbind(
   as.data.frame(canopy_18_mean)['canopy'],
   as.data.frame(road_18)['road'],
