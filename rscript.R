@@ -468,17 +468,7 @@ port14 <- cbind(
     rename(lcchange = lc )
 )
 
-port14bc <- cbind(
-  as.data.frame(port_14_canopy)['canopy'],
-  as.data.frame(port_14_road)['road'],
-  as.data.frame(port_14_other)['other'],
-  as.data.frame(port_14_shrub)['shrub'],
-  as.data.frame(port_14_water)['water'],
-  as.data.frame(port_14_10_rc)[c('x','y','lc')] %>%
-    rename(imperv = lc )
-)
 
-saveRDS(port14bc,'~/Github/Precision-Forecast/undecided/output/port14bc.rds')
 port18 <- cbind(
   as.data.frame(canopy_18_mean)['canopy'],
   as.data.frame(road_18)['road'],
@@ -715,7 +705,7 @@ isle18 <- cbind(
     rename(imperv = lc )
 )
 
-isle14 <-  cbind(isle_14_10_crop,canopy_14_mean, road_14, other_14_mean, shrub_14_mean, water_14_mean, isle_14_pcnt_imperv, isle_change_rc,isle_change) # change impervious(0, 1, -1) -1 is targeted
+isle14 <-  cbind(isle_14_10_crop,canopy_14_mean, road_14, other_14_mean, shrub_14_mean, water_14_mean, isle_14_pcnt_imperv, isle_change_rc,isle_change) # change impervious(0, 1, -1) 1 is targeted
 rm(canopy_14_mean, road_14, other_14_mean, shrub_14_mean, water_14_mean, isle_14_pcnt_imperv, isle_change_rc)
 
 isle18 <- cbind(isle_18_10_crop, canopy_18_mean, road_18,other_18_mean, shrub_18_mean, water_18_mean,isle_18_pcnt_imperv)
