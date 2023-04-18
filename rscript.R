@@ -759,146 +759,93 @@ isle14_df <- readRDS( "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/ou
 jame14_df <- readRDS( "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/jame14_df.rds")
 port14_df <- readRDS( "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/port14_df.rds")
 
-# Define function to apply modeling process to a dataset
-apply_model <- function(data) {
-  # Data preparation
-  data <- data %>% 
-    mutate(
-      lcre = case_when(lcchange == -1 ~ 1,
-                       lcchange == 1 ~ 0,
-                       lcchange == 0 ~ 0)
-    ) %>% 
-    mutate(
-      lcchange = as.factor(lcchange),
-      lcre = as.factor(lcre)
-    )
-  
+
+
+# Data preparation
+data <- data %>% 
+  mutate(
+    lcre = case_when(lcchange == -1 ~ 0,
+                     lcchange == 1 ~ 1,
+                     lcchange == 0 ~ 0)
+  ) %>% 
+  mutate(
+    lcchange = as.factor(lcchange),
+    lcre = as.factor(lcre)
+  )
+
+
+# Initial split for training and test
+data_split <- initial_split(data, strata = "lcchange", prop = 0.8)
+data_train <- training(data_split)
+data_test <- testing(data_split)
+
+apply_model_rf <- function(data) {
   # Sample data
-  balanced_data <-  data %>%
-         group_by(lcre) %>%
-         sample_n(min(table(data$lcre)), replace = FALSE)
-  
-  # Initial split for training and test
-  data_split <- initial_split(balanced_data, strata = "lcchange", prop = 0.75)
-  data_train <- training(data_split)
-  data_test <- testing(data_split)
-  
+  balanced_data <- data_train[c(sample(which(data_train$lcre == 0), sum(data_train$lcre == 1) *10) , which(data_train$lcre == 1)),]
   # Cross-validation
-  cv_splits_geo <- group_vfold_cv(data_train, group = "GEOID")
+  cv_splits_geo <- group_vfold_cv(balanced_data, group = "GEOID")
   
   # Create recipe
-  model_rec <- recipe(lcre ~ ., data = data_train) %>%
-    update_role(GEOID, new_role = "GEOID") %>%
+  model_rec <- recipe(lcre ~ ., data = balanced_data) %>%
+    update_role(GEOID, new_role = "GEOID") %>% #78
     update_role(lcchange, new_role = "lcchange") %>%
-    step_ns(x, y, options = list(df = 2))
-  
-  
+    update_role(port_51740_landcover_2014.tif, new_role = "originallc") %>%
+    update_role(lc, new_role = "lc")# %>%
+  step_ns(x, y, options = list(df = 1))
   
   # Model specifications
-  glm_plan <- logistic_reg() %>%
-    set_engine("glmnet") %>%
-    set_mode("classification") %>%
-    set_args(
-      penalty = tune(), 
-      mixture =as.numeric(tune()))
-  
-  
   rf_plan <- rand_forest() %>%
     set_args(mtry  = tune()) %>%
-    set_args(min_n = tune()) %>%
-    set_args(trees = 1000) %>% 
+    set_args(min_n = tune()) %>%  # 100,1000,seq=200
+    set_args(trees =  tune()) %>% # 1000
+    #set_args(max_depth  =  10) %>% 
     set_engine("ranger", importance = "impurity") %>% 
     set_mode("classification")
   
-  
-  xgb_plan <- boost_tree() %>%
-    set_args(mtry  = tune()) %>%
-    set_args(min_n = tune()) %>%
-    set_args(trees = 100) %>% 
-    set_engine("xgboost") %>% 
-    set_mode("classification")
-  
-  # Modify the hyperparameter grid for each model
-  
-  glmnet_grid <- expand.grid(penalty = seq(0, 1, by = .25), 
-                             mixture = seq(0,1,0.25))
-  rf_grid <- expand.grid(mtry = c(2,5), 
-                         min_n = c(1,5))
-  xgb_grid <- expand.grid(mtry = c(3,5), 
-                          min_n = c(1,5))
+  rf_grid <- expand.grid(mtry = c(5,10,15),
+                         min_n  = c(100,500,900),
+                         trees =  c(1000,1500)
+  )
   
   # Create the workflow
-  glm_wf <- workflow() %>% 
-    add_recipe(model_rec) %>% 
-    add_model(glm_plan)
-  
-  
   rf_wf <-
     workflow() %>% 
     add_recipe(model_rec) %>% 
     add_model(rf_plan)
   
-  xgb_wf <-
-    workflow() %>% 
-    add_recipe(model_rec) %>% 
-    add_model(xgb_plan)
-  
   # Tune hyperparameters
   control <- control_resamples(save_pred = TRUE, verbose = TRUE)
   metrics <- metric_set(f_meas)
   
-  glm_tuned <- glm_wf %>%
-    tune_grid(resamples = cv_splits_geo,
-              grid      = glmnet_grid,
-              control = control,
-              metrics = metrics)
-  
-  
   rf_tuned <- rf_wf %>%
-    tune::tune_grid(
-      resamples = cv_splits_geo,
-      grid      = rf_grid,
-      control   = control,
-      metrics   = metrics)
-  
-  
-  xgb_tuned <- xgb_wf %>%
-    tune::tune_grid(resamples = cv_splits_geo,
-                    grid      = rf_grid,
-                    control   = control,
-                    metrics   = metrics)
+    tune_grid(resamples = cv_splits_geo,
+              grid      = rf_grid,
+              control   = control,
+              metrics   = metrics)
   
   # Select best model
-  glm_best_params <- select_best(glm_tuned, metric = "accuracy")
-  rf_best_params <- select_best(rf_tuned, metric = "accuracy")
-  xgb_best_params <- select_best(rf_tuned, metric = "accuracy")
-  glm_best_wf <- finalize_workflow(glm_wf, glm_best_params)
+  rf_best_params <- select_best(rf_tuned, metric = "f_meas")
   rf_best_wf <- finalize_workflow(rf_wf, rf_best_params)
-  xgb_best_wf <- finalize_workflow(xgb_wf, xgb_best_params)
   
-  # Evaluate on test set
-  glm_val_fit_geo <- glm_best_wf %>% 
-    last_fit(split = data_split,
-             control = control,
-             metrics = metrics)
+  return(rf_best_wf)
+}
+
+# Fit multiple models
+num_models <- 5
+predict_dfs <- list()
+rf_wfs <- list()
+for (i in 1:num_models) {
+  # Split data
+  rf_wf <- apply_model_rf(data_train)
   
-  rf_val_fit_geo <- rf_best_wf %>% 
-    last_fit(split = data_split,
-             control = control,
-             metrics = metrics)
-  
-  xgb_val_fit_geo <- xgb_best_wf %>% 
-    last_fit(split = data_split,
-             control = control,
-             metrics = metrics)
-  
-  # Show best model and its parameters
-  show_best(glm_tuned, metric = "accuracy")
-  show_best(rf_tuned, metric = "accuracy")
-  show_best(xgb_tuned, metric = "accuracy")
-  
-  # Return results
-  return (list(glm_best_wf,rf_best_wf,xgb_best_wf), list(glm_val_fit_geo, rf_val_fit_geo, xgb_val_fit_geo))
+  # Make predictions
+  rf_full_wf <- rf_wf %>%
+    fit(data)
+  predict_df <-
+    predict(rf_full_wf , new_data = data, type = "prob")
+  # Add to list
+  predict_dfs[[i]] <- predict_df[2]
+  rf_wfs[[i]] <- rf_full_wf
 }
 
 
