@@ -23,7 +23,7 @@ This project was completed for the MUSA/Smart Cities Practicum course (MUSA 801)
 
 ## 1.Introduction
 ### 1.1 Abstract
-This project aims to develop a precision forecast model for land cover change at the Chesapeake Watershed. By leveraging high-resolution longitudinal land cover data provided by the Chesapeake Conservancy, the model will predict land cover conversions from pervious to impervious surfaces. This forecast will enable land use and environmental planners to visualize and assess potential impacts on flood risk, heat stress, and heat island risks in the region. The model will be generalizable to the county level, incorporating only widely available inputs, thus allowing any municipality within the Chesapeake basin to replicate the analysis. This proof-of-concept project will demonstrate the utility of precision conservation in climate adaptation and mitigation planning and provide a valuable tool for planners and policymakers across the region.
+This project aims to develop a precision forecast model for land cover change at the Chesapeake Watershed. By leveraging high-resolution longitudinal land cover data provided by the Chesapeake Conservancy, the model will predict land cover conversions from pervious to impervious surfaces. This forecast will enable land use and environmental planners to identify where urban growth will occur, propose green infrastructure accordingly, and prioritize lands for protection. The model will be generalizable to the county level, incorporating only widely available inputs, thus allowing any municipality within the Chesapeake basin to replicate the analysis. This proof-of-concept project will demonstrate the utility of precision conservation in land protection and green infrastructure planning and provide a valuable tool for planners and policymakers across the region.
 
 ### 1.2 Background 
 The Chesapeake Bay watershed is an ecologically and economically significant resource, encompassing diverse ecosystems and supporting a multitude of industries, including agriculture, tourism, and fisheries. However, the region is facing increasing environmental challenges due to the combined effects of sea-level rise and land subsidence. As a result, the area has become the second-most vulnerable region in the nation to flooding and storm surge, only after New Orleans. Predicting land cover changes, particularly the conversion from pervious to impervious surfaces, is crucial in addressing these challenges and informing climate adaptation and mitigation planning.
@@ -36,6 +36,8 @@ Our project focuses on three distinct counties within the Chesapeake Bay watersh
 ### 1.3 Motivation & Use Case
 
 To build resilient communities, the HRPDC has set up a green infrastructure plan. This plan aims to to identify and prioritize a network of valuable conservation lands in order to achieve multiple benefits, such as habitat protection, drinking water supply protection, stormwater management and recreational opportunities. A new component of this plan is to build a model for the potential future growth and identify which areas of the green infrastructure network are most at risk for development.
+
+[Green Infrastructure Plan for Hampton Roads Region](https://www.hrpdcva.gov/departments/planning/green-infrastructure-plan-for-hampton-roads-region/)
 
 ## 2. Data and Methods
 
