@@ -231,7 +231,7 @@ get_county_data <- function(state, county, year) {
     geometry = TRUE,
     output = "wide"
   ) %>%
-    st_transform(st_crs(port_18_10_rc)) %>%
+    st_transform(st_crs(port_18)) %>%
     rename(
       TotalPop = B01003_001E,
       Whites = B02001_002E,
