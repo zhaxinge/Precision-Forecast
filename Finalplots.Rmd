@@ -35,14 +35,21 @@ Our project focuses on three distinct counties within the Chesapeake Bay watersh
 
 ### 1.3 Motivation & Use Case
 
-To build resilient communities, the HRPDC has set up a green infrastructure plan. This plan aims to to identify and prioritize a network of valuable conservation lands in order to achieve multiple benefits, such as habitat protection, drinking water supply protection, stormwater management and recreational opportunities. A new component of this plan is to build a model for the potential future growth and identify which areas of the green infrastructure network are most at risk for development.
+Building resilient communities is a top priority for the Hampton Roads Planning District Commission (HRPDC). To support this goal, the HRPDC has established a green infrastructure plan that seeks to identify and prioritize a network of valuable conservation lands. This plan aims to achieve multiple benefits, such as habitat protection, drinking water supply protection, stormwater management, and recreational opportunities.
 
-[Green Infrastructure Plan for Hampton Roads Region](https://www.hrpdcva.gov/departments/planning/green-infrastructure-plan-for-hampton-roads-region/)
+A crucial component of this plan involves developing a model to forecast potential future growth and identify areas of the green infrastructure network that are most at risk for development. Our project aims to create a forecast that enables land use and environmental planners to pinpoint where urban growth is likely to occur, propose green infrastructure accordingly, and prioritize lands for protection. 
+
+This proof-of-concept project demonstrates the utility of precision conservation in land protection and green infrastructure planning, providing a valuable tool for planners and policymakers across the region. For example, Andrew, the head of the Green Infrastructure Team from Chesapeake Conservancy, and his team will use our web app to make informed decisions on which regions have the highest priority to receive funding.
+
+![](images/use_case.png)
+
 
 ## 2. Data and Methods
 
-### 2.1 Understanding landcover data
-The Chesapeake Conservancy supplies us with high-resolution landcover data at 2013/14 and 2017/18 , which is essential for our precision conservation efforts. This data is a vast raster dataset with an impressive 1-meter accuracy, offering 900 times more detail than the commonly used 30-meter resolution National Land Cover Dataset. This level of detail is critical in capturing subtle changes in land use and land cover. Within the landcover classification, pervious surfaces include categories such as tree canopy, shrub, and wetlands, which allow water to infiltrate the ground, while impervious surfaces encompass categories like roads and structures that prevent water infiltration, leading to increased runoff and potential flooding issues. This detailed classification enables us to better understand and predict land cover changes, particularly the conversion from pervious to impervious surfaces.
+### 2.1 Understanding Land Cover data
+The Chesapeake Conservancy provided high-resolution land cover data for 2013/14 and 2017/18. This vast raster dataset boasts an impressive 1-meter accuracy, offering 900 times more detail than the commonly used 30-meter resolution National Land Cover Dataset. Such a level of detail is crucial for capturing subtle changes in land cover.
+
+The land cover classification includes pervious surfaces such as tree canopies and shrubs, which allow water to infiltrate the ground. In contrast, impervious surfaces encompass categories like roads and structures that prevent water infiltration, leading to increased runoff and potential flooding issues. Even though water and wetland are often considered impervious surfaces, in this study, we classify them as pervious surfaces due to their dynamic nature, interaction with groundwater, floodplain connectivity, and the critical functions of wetlands in water storage and infiltration. 
 
 ![](images/Data.png)
 
@@ -64,138 +71,114 @@ To make it easier for our future analysis, we gathered and resampled all data to
 
 ![](images/method.png)
 
+
+
+
 ## 3. Exploratory Analysis
 
-### 3.1 Enviornmental Factors
+### 3.1 Land Cover Type and Change Dynamics
+We began by comparing the land cover patterns and changes across the three counties. This comparison helped us identify each county's unique characteristics and trends, providing insights into how urban, suburban, and rural contexts affected land cover conversion. Land cover changes are highly related to the existing land cover type. For James City and Isle of Wight, tree canopy is the land cover type that undergoes the most change, while for Portsmouth, low vegetation experiences the most significant change.
+
+![](images/landcover.png)
+
+### 3.2 Environmental Factors
+
+Environmental factors played a significant role in land cover changes. We examined site characteristics that remained constant over time, such as elevation, slope, and soil type, to understand their influence on land cover conversion patterns. Understanding these static factors helped us predict how land cover might evolve in different environmental settings.
+
+Take Portsmouth county as example, the plot below demonstrates that the mean slope in areas where land cover changed from pervious to impervious between 2014 and 2018 (1) is significantly higher than in areas that did not change or changed in the opposite direction (0).
+
+![](images/environment.png)
+
+### 3.3 Social and Economical Factors
+Social and economic factors, which change over time, also impact land cover changes. We investigated variables such as population growth, economic development, and demographic changes to understand how these factors contributed to land cover conversion. By incorporating these dynamic factors into our analysis, we were able to better forecast land cover changes based on potential future scenarios.
+
+The plots presented here illustrate that the percentage of white population change exhibits a different pattern in areas of land cover change compared to the overall county. This observation indicates that in Portsmouth County, land cover change is also associated with changes in census data, particularly the percentage of white population change.
 
 
-![](images/port-bar2.png)
-
-Take Portsmouth county as example, we find that landcover change from pervious to impervious tend to happens at in where has less canopy area, far away from water, and slope is steeper.
-
-![](images/port-bar2.png)
-
-### 3.2 Social and Economical Factors
+![](images/social.png)
 
 
 
-![](images/port-bar.png)
-### 3.3 Feature engineering
+## 4. Feature Engineering
+
+### 4.1 Spatial Effects
+Incorporating spatial relationships into our model was crucial for capturing the spatial influence of original land cover types on land cover change. We performed focal raster calculations and spatial lag calculations to create features that accounted for the spatial context of land cover conversion. These engineered features helped us develop a more accurate and robust predictive model, capable of capturing the nuances of land cover change across diverse development contexts.
+
+![](images/feature_engineering.png)
+
+### 4.2 Final Features (Need Check!)
+#### Dependent Variable
+* Whether the land cover change from impervious to previous 
+
+#### Independent Variables
+
+* Existing land cover types 
+    + Pop change
+    + Pct of white change 
+    + Unitchange
+    + Median Household Income change   
+
+* Environmental factors
+    + Elevation (Terrain)
+    + Slope
+    + Soil Type
+
+* Socio-economic factors 
+    + Pop change
+    + Pct of white change 
+    + Unitchange
+    + Median Household Income change    
+
+* Spatial Lag factors 
+    + Pop change
+    + Pct of white change 
+    + Unitchange
+    + Median Household Income change 
 
 
 
-#### dependent: pervious to impervious surface during the period 2014-201
-#### independent:
-    lccover change 能change
-    1. `originallc` originallandcover
-    
-    2. `lcp` permeable/impermeable:
-    < 6 - 0
-    >= 6 - 1
-    
-    3. `lcchange` whether landcover has changed: 1
-    
-    4. `lc` 3*3的permeable rate:
-    0-1（0.1，0.2， 0.3， 0.4， 0.5， 0.6， 0.7， 0.8）
-    
-    5. `popchange` per m^2
-    
-    6. `pctwhitechange`
-    
-    7. `unitchange` per m^2
-    
-    8. `medhhincchange` per m^2
-    
-    9. `road` road 1/0
-    
-    10. `water` water
-    
-    11. `canopy` tree canopy：
-    tree canopy - 1
-    tree canopy over structure -0.5
-    tree canopy over other -0.5
-    tree canopy over road - 0.5
-    other - 0
-    
-    12. `perm` permeable:
-    2 -shrub - 0.3
-    4 - herb - 0.3
-    5 - wetand - 0.4
-    other -0
-    
-    13. `barren` barren:
-    6 - barren - 1
-    not barren - 0
-    
-    14. `struct` structure:
-    7 - structure - 1
-    not structure - 0
-    
-    15. `other` other:
-    8 - other - 1
-    not other - 0
-    
-    16. `terrain`dem
-    
-    17. `slope`slope
-    
-    18. `area` m^2 per block group
-    
-    19. `geoid`-- blockgroup id
-    
-    20. `soil type`-
+## 5. Modeling & Evaluation (Need Check!)
+
+### 5.1 Model Building
+To ensure computational efficiency and scalability, we downsampled the original dataset to 500,000 data points for model building and then fitted the selected model back to the whole dataset for future predictions. We employed geo cross-validation at the block group level to ensure the robustness of our model and avoid overfitting.
+
+Performance evaluation was conducted using the confusion matrix for binary threshold setting and model selection. This approach allowed us to assess the accuracy, sensitivity, and specificity of the models and compare their performance.
+
+![](images/sample.png)
+
+### 5.2 Model Type Selection
+
+Recognizing that different types of models perform well on different datasets, we experimented with three model types for predicting land cover change: Random Forest, XGBoost, and Binomial Generalized Linear Model (GLM). These models were chosen due to their ability to handle complex interactions and non-linear relationships within the data.
+
+After evaluating the performance of each model type, we selected Random Forest as the most suitable model for our analysis, as it demonstrated the best accuracy. Random Forest is an ensemble learning method that builds multiple decision trees and combines their results to improve overall accuracy and stability. This model is particularly well-suited for handling high-dimensional and noisy data, making it an ideal choice for predicting land cover changes in our study area.
+
+![](images/model_compare.png)
+
+### 5.3 Refine for better prediction
 
 
-模型encode：categorial：尤其是
 
-possible features per 10*10 :
+### 5.4 Model Evaluation & Validation
 
-Road density
-**distance to rivers**
+roc
 
-impervious / pervious
-landcover type
-population density
-population change per 4 year
-median hh income
-median hh income change per 4 year
-percentage of white population
-percentage of white population change per 4 year
-percentage of changing from impervious to pervious/from pervious to impervious in 4 years
-predicted landcover type:
-
-possible features per block group :
-
-percentage of impervious / pervious change:
-population
-population change per 4 year
-median hh income
-median hh income change per 4 year
-percentage of white population
-percentage of white population change per 4 year
-percentage of changing from impervious to pervious/from pervious to impervious in 4 years
-predicted landcover type composition:
-
-possible feautres per county:
-
-percentage of impervious / pervious change:
-population
-population change per 4 year
-median hh income
-median hh income change per 4 year
-percentage of white population
-percentage of white population change per 4 year
-percentage of changing from impervious to pervious/from pervious to impervious in 4 years
-predicted landcover type composition:
-development speed defined by: speed of population change and landcover change speed
-Agricultural land use, vegetation cover and water loss:
+![](images/sen.png)
 
 
-## 4. Modeling & Evaluation
+### 5.5 Comparison between Counties
 
-### 4.1 Enviornmental Factors
+![](images/model_importance.png)
 
 
-## 5. Conclusion
+## 6. Prediction & Error Analysis
 
-## 6. Code Appendix
+By comparing the predicted 2018 land cover change with the observed change, we can tell that errors in the prediction are likely to be around the true value, indicating the effectiveness of the model. Looking at the future prediction of 2021, we can see that many of the predicted changes are consistent with the observed change. However, the model has also identified new areas of land cover change. This suggests that the model is able to detect changes that were not previously observed, which can be valuable for land management and conservation efforts.
+
+
+![](images/predic1000.png)
+
+
+
+## 6. Conclusion
+
+## 7. Code Appendix
