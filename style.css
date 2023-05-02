@@ -1,0 +1,32 @@
+#sidebar {
+  background: #5a9c8c;
+}
+
+#postamble {
+  background:rgb(10, 124, 112);
+  border-top:solid 10px #5a9c8c;
+}
+
+.title {
+  color: rgb(10, 124, 112);
+}
+
+.subtitle {
+  color: rgb(10, 124, 112);
+}
+
+h1,  h3, h4, h5, h6, legend {
+  color: #5a9c8c;
+
+}
+
+h2{
+    color:white;
+    text-align: center;
+}
+#content h2 {
+    background-color: rgb(10, 124, 112);
+}
+#content{
+    max-width:1920px;
+}
