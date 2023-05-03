@@ -167,7 +167,7 @@ The plots below demonstrate that in Portsmouth, the mean slope in areas where la
 Social and economic factors, which change over time, also impact land cover changes. We investigated variables such as population growth, economic development, and demographic changes to understand how these factors contributed to land cover conversion. By incorporating these dynamic factors into our analysis, we were able to better forecast land cover changes based on potential future scenarios.
 
 
-The factors are calculated with the formular below: 
+The factors are calculated with the formula below: 
 
       Pop change = (TotalPop2018 - TotalPop2014) / (TotalPop2018 * area),
       Pct of white change = (pctWhite2018 - pctWhite2014),
@@ -191,7 +191,7 @@ The factors are calculated with the formular below:
 
 #### {-}
 
-The plots presented here illustrate that in Portsmouth, the Median household income, percentage of white population change, and unit change exhibits a different pattern in areas where land cover changed from pervious to impervious between 2014 and 2018 (1) compared to the other situations (0). In James city, all five factors show different pattern across the two categories, but percentage of white population change various the most. In Isle of wight, percentage of white population change, total population change and unit change exhibits a different pattern in areas where land cover changed from pervious to impervious between 2014 and 2018 (1) compared to the other situations (0).                  
+The plots presented here illustrate that in Portsmouth, the Median household income, percentage of white population change, and unit change exhibit a different pattern in areas where land cover changed from pervious to impervious between 2014 and 2018 (1) compared to the other situations (0). In James City, all five factors show different patterns across the two categories, but the percentage of white population change varies the most. In the Isle of Wight, the percentage of white population change, total population change, and unit change exhibits a different pattern in areas where land cover changed from pervious to impervious between 2014 and 2018 (1) compared to the other situations (0).                     
 
 
 
@@ -290,8 +290,8 @@ After evaluating the performance of each model type, we selected Random Forest a
 
 
 
-We calculated MAPE fo each cencus block group to test the model’s generalizability. The results indicate at Portsmouth, that our model has a low MAPE for majority of the neighborhood and slightly higher MAPE in some block groups down the south.  In James city, MAPE is relatively consistent across the block groups. In Isle of Wight, 
-All three models are generalizable.
+We calculated MAPE for each census block group to test the model’s generalizability. The results indicate at Portsmouth that our model has a low MAPE for the majority of the neighborhood and slightly higher MAPE in some block groups down the south. In James City, MAPE is relatively consistent across the block groups. In the Isle of Wight, 
+All three models are generalizable.  
 
 
 
