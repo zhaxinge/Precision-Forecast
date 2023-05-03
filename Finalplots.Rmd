@@ -4,11 +4,10 @@ subtitle: "Chesapeake Watershed"
 author: "Yuewen Dai, Shujing Yi, Xinge Zhang"
 date: "2023-04-25"
 output: 
-  html_document:
-    toc: true
-    toc_float: true
-    code_folding: "hide"
-    code_download: true
+  rmdformats::readthedown: 
+    code_folding: hide
+css: style.css
+
 ---
 
 ```{r setup, include=FALSE}
@@ -76,28 +75,141 @@ To facilitate our future analysis and ensure consistency, we gathered and resamp
 
 ## 3. Exploratory Analysis
 
+
 ### 3.1 Land Cover Type and Change Dynamics
-We began by comparing the land cover patterns and changes across the three counties. This comparison helped us identify each county's unique characteristics and trends, providing insights into how urban, suburban, and rural contexts affected land cover conversion. Land cover changes are highly related to the existing land cover type. For James City and Isle of Wight, tree canopy is the land cover type that undergoes the most change, while for Portsmouth, low vegetation experiences the most significant change.
+Land cover changes are highly related to the existing land cover type. We began by comparing the land cover patterns and changes across the three counties. This comparison helped us identify each county's unique characteristics and trends, providing insights into how urban, suburban, and rural contexts affected land cover conversion.  For James City and Isle of Wight, tree canopy is the land cover type that undergoes the most change, while for Portsmouth, low vegetation experiences the most significant change.
 
 ![](images/landcover.png)
 
+
+Then we look into each different land cover type. Pervious surface including canopy, shrubs, low vegetation, wetlands, and water.
+
+#### {.tabset}
+
+##### Portsmouth
+
+![](images/pervious -port.png)
+
+##### James City
+
+![](images/pervious -james.png)
+
+##### Isle of Wight
+
+![](images/pervious -isle.png)
+
+#### {-}
+
+Impervious surface including barren, road, structure and others.
+
+#### {.tabset}
+
+##### Portsmouth
+
+![](images/impervious-port.png)
+
+##### James City
+
+![](images/impervious-jame.png)
+
+##### Isle of Wight
+
+![](images/impervious-isle.png)
+
+#### {-}
+
+After reclassifying land cover to 0 (pervious surface) and 1 (impervious surface), we use the 2018 value minus the 2014 value and get 1 as those change from pervious to impervious surface, 0 as those didn't change, and -1 as those change from impervious to pervious surface. Then we reclassify 1 stay as the land cover change from pervious to impervious from 2014 to 2018, 0 and -1 all as 0 for other situations.
+
+![](images/change_p_to_i.png)
+
 ### 3.2 Environmental Factors
 
-Environmental factors played a significant role in land cover changes. We examined site characteristics that remained constant over time, such as elevation, slope, and soil type, to understand their influence on land cover conversion patterns. Understanding these static factors helped us predict how land cover might evolve in different environmental settings.
+Environmental factors played a significant role in land cover changes. To understand their influence on land cover conversion patterns, we examined site characteristics that remained constant over time, such as elevation (terrain), slope, and soil type. Understanding these static factors helped us predict how land cover might evolve in different environmental settings.
 
-Take Portsmouth county as example, the plot below demonstrates that the mean slope in areas where land cover changed from pervious to impervious between 2014 and 2018 (1) is significantly higher than in areas that did not change or changed in the opposite direction (0).
+#### {.tabset}
 
-![](images/environment.png)
+##### Portsmouth
+
+![](images/en-port-map.png)
+
+##### James City
+
+![](images/en-james-map.png)
+
+##### Isle of Wight
+
+![](images/en-isle-map.png)
+
+#### {-}
+
+
+The plots below demonstrate that in Portsmouth, the mean slope in areas where land cover changed from pervious to impervious between 2014 and 2018 (1) is significantly higher than in areas that did not change or change in the opposite direction (0). This is the opposite of the pattern shown at the Isle of Wight, possibly due to the very different nature of urban and rural development. Soil and terrain show little difference across the two categories for both two counties. But at James City, the mean elevation in areas where land cover changed from pervious to impervious between 2014 and 2018 (1) is significantly higher than in areas that did not change or change in the opposite direction (0).
+
+#### {.tabset}
+
+##### Portsmouth
+
+![](images/en-port.png)
+
+##### James City
+
+![](images/en-james.png)
+
+##### Isle of Wight
+
+![](images/en-isle.png)
+
+#### {-}
+
+
 
 ### 3.3 Social and Economical Factors
 Social and economic factors, which change over time, also impact land cover changes. We investigated variables such as population growth, economic development, and demographic changes to understand how these factors contributed to land cover conversion. By incorporating these dynamic factors into our analysis, we were able to better forecast land cover changes based on potential future scenarios.
 
-The plots presented here illustrate that the percentage of white population change exhibits a different pattern in areas of land cover change compared to the overall county. This observation indicates that in Portsmouth County, land cover change is also associated with changes in census data, particularly the percentage of white population change.
+
+The factors are calculated with the formular below: 
+
+      Pop change = (TotalPop2018 - TotalPop2014) / (TotalPop2018 * area),
+      Pct of white change = (pctWhite2018 - pctWhite2014),
+      Unitchange = (TotalUnit2018 - TotalUnit2014) / area,
+      MedHHIncchange = (MedHHInc2018 - MedHHInc2014) / area
 
 
-![](images/social.png)
+#### {.tabset}
+
+##### Portsmouth
+
+![](images/port-census-map.png)
+
+##### James City
+
+![](images/jame-census-map.png)
+
+##### Isle of Wight
+
+![](images/isle-census-map.png)
+
+#### {-}
+
+The plots presented here illustrate that in Portsmouth, the Median household income, percentage of white population change, and unit change exhibits a different pattern in areas where land cover changed from pervious to impervious between 2014 and 2018 (1) compared to the other situations (0). In James city, all five factors show different pattern across the two categories, but percentage of white population change various the most. In Isle of wight, percentage of white population change, total population change and unit change exhibits a different pattern in areas where land cover changed from pervious to impervious between 2014 and 2018 (1) compared to the other situations (0).                  
 
 
+
+#### {.tabset}
+
+##### Portsmouth
+
+![](images/port-census.png)
+
+##### James City
+
+![](images/jame-census.png)
+
+##### Isle of Wight
+
+![](images/isle-census.png)
+
+#### {-}
 
 ## 4. Feature Engineering
 
@@ -112,7 +224,9 @@ To select variables for our predictive model, we visualize correlations between 
 ![](images/correlationplot.png)
 
 ### 4.3 Final Features 
+
 Based on this plot, we select the following variables to use in our model:
+
 #### Dependent Variable
 * Whether the land cover change from impervious to previous 
 
@@ -170,9 +284,18 @@ After evaluating the performance of each model type, we selected Random Forest a
 
 ### 5.4 Model Evaluation & Validation
 
-roc
 
-![](images/sen.png)
+
+![](images/port-threshold.png)
+
+
+
+We calculated MAPE fo each cencus block group to test the model’s generalizability. The results indicate at Portsmouth, that our model has a low MAPE for majority of the neighborhood and slightly higher MAPE in some block groups down the south.  In James city, MAPE is relatively consistent across the block groups. In Isle of Wight, 
+All three models are generalizable.
+
+
+
+![](images/Mape_by_hood_port.png)
 
 
 ### 5.5 Comparison between Counties
@@ -198,20 +321,43 @@ In Isle of Wight County, land cover changes from pervious to impervious surfaces
 
 By comparing the predicted 2018 land cover change with the observed change, we can tell that errors in the prediction are likely to be around the true value, indicating the effectiveness of the model. Looking at the future prediction of 2021, we can see that many of the predicted changes are consistent with the observed change. However, the model has also identified new areas of land cover change. This suggests that the model is able to detect changes that were not previously observed, which can be valuable for land management and conservation efforts.
 
+#### {.tabset}
 
-![](images/predict.png)
+##### Portsmouth
+
+![](images/port-map-result-compare.png)
+
+##### James City
+
+![](images/jame.png)
+
+##### Isle of Wight
+
+![](images/isle-map-result-compare.png)
+
+#### {-}
+
 
 
 ![](images/predic1000.png)
 
 
+## 7. App Development
 
-## 7. Conclusion
+[Link to our app](https://yuewendai.github.io/MUSA-Practicum-Web/)
+
+Once we have obtained the prediction results from our machine learning model, we input them into a web application. At the core of this application is an interactive map that allows users to view the probability of each county's region transitioning from permeable to impermeable in the future by selecting various layers. The probability is divided into five equal parts based on its highest value, with the high probability change areas highlighted in red.
+Users can further click on the "check layer" to view specific information about these high probability conversion areas, including their past land cover types and the specific numerical values of their probability of conversion. The high-risk areas are marked in red, making them easier to locate quickly.
+Users can also select other relevant information from a dropdown list, such as complete land cover maps from 2014/2018 and census tract data. This information can assist decision-makers in balancing their decisions on whether to protect certain areas.
+
+![](images/app.png)
+
+## 8. Conclusion
 In conclusion, we successfully designed and set up an efficient workflow for testing and modeling land cover change predictions. Our chosen model, Random Forest, achieved a high balanced accuracy of approximately 98%, with performance metrics indicating that it generalizes well across different counties and land cover types. However, the model scripts require a considerable amount of time to run, which might pose challenges for replication and scalability.
 
 Additionally, the model demonstrates lower accuracy in predicting land cover change compared to no change, which can be attributed to the uneven distribution of data. Despite these limitations, we are confident that our model and accompanying app can significantly contribute to the utility of precision conservation in land protection and green infrastructure planning. Ultimately, our project provides a valuable tool for planners and policymakers across the region, enabling them to make informed decisions on land use management and conservation strategies.
 
-## 8. Code Appendix
+## 9. Code Appendix
 
 ```{r eval=FALSE}
 
