@@ -319,7 +319,7 @@ In Isle of Wight County, land cover changes from pervious to impervious surfaces
 
 ![](images/risk.png)
 
-By comparing the predicted 2018 land cover change with the observed change, we can tell that errors in the prediction are likely to be around the true value, indicating the effectiveness of the model. Looking at the future prediction of 2021, we can see that many of the predicted changes are consistent with the observed change. However, the model has also identified new areas of land cover change. This suggests that the model is able to detect changes that were not previously observed, which can be valuable for land management and conservation efforts.
+By comparing the predicted and observed result, model captured some clustering characteristics of land cover change.
 
 #### {.tabset}
 
@@ -336,6 +336,11 @@ By comparing the predicted 2018 land cover change with the observed change, we c
 ![](images/isle-map-result-compare.png)
 
 #### {-}
+
+To better understand the precision forecast , we select a sample square with a size of 1000m * 1000m in Portsmouth. By comparing the result in such a detailed scale, we can tell that errors in the prediction are likely to be around the true value, indicating the effectiveness of the model.
+
+Looking at the future prediction of 2021, we can see that many of the predicted changes are consistent with the observed change. Moreover, the model has identified new areas of land cover change. This suggests that the model is able to detect changes that were not previously observed, which can be valuable for land management and conservation efforts.
+
 
 
 
