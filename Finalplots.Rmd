@@ -351,7 +351,7 @@ Looking at the future prediction of 2021, we can see that many of the predicted 
 
 [Link to our app](https://yuewendai.github.io/MUSA-Practicum-Web/)
 
-Once we have obtained the prediction results from our machine learning model, we input them into a web application. At the core of this application is an interactive map that allows users to view the probability of each county's region transitioning from permeable to impermeable in the future by selecting various layers. The probability is divided into five equal parts based on its highest value, with the high probability change areas highlighted in red.
+Once we have obtained the prediction results from our machine learning model, we input them into a web application. At the core of this application is an interactive map that allows users to view the probability of each county's region transitioning from permeable to impermeable in the future by selecting various layers. The probability interval is divided into five equal parts based on its highest value, with the high probability change areas highlighted in red.
 Users can further click on the "check layer" to view specific information about these high probability conversion areas, including their past land cover types and the specific numerical values of their probability of conversion. The high-risk areas are marked in red, making them easier to locate quickly.
 Users can also select other relevant information from a dropdown list, such as complete land cover maps from 2014/2018 and census tract data. This information can assist decision-makers in balancing their decisions on whether to protect certain areas.
 
