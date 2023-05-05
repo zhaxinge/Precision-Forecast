@@ -1,6 +1,6 @@
 
 ########### Required Packages ###########
-packages = c("stars","starsExtra", "abind","tigris","tidycensus","dyplyr",
+packages = c("stars","starsExtra", "abind","tigris","tidycensus","dplyr",
              "bayesplot", "lme4","RcppEigen","knitr","yardstick",
              "tidyverse", "tidyr", "broom", "caret", "dials", "doParallel", "e1071", "earth",
              "ggrepel", "glmnet", "ipred", "klaR", "kknn", "pROC", "rpart", "randomForest",
@@ -66,7 +66,6 @@ mapTheme <- theme(plot.title =element_text(size=12),
                   panel.grid.minor=element_blank(),
                   legend.direction = "vertical", 
                   legend.position = "right",
-                  plot.margin = margin(1, 1, 1, 1, 'cm'),
                   legend.key.height = unit(1, "cm"), legend.key.width = unit(0.2, "cm"))
 
 palette2 <- c("#41b6c4","#253494")
@@ -86,15 +85,15 @@ palette10 <- c("#f7fcf0","#e0f3db","#ccebc5","#a8ddb5","#7bccc4",
 # load all the land cover data
 port_14 <- read_stars("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/lc/port_51740_lc_2014/port_51740_landcover_2014.tif") 
 port_18 <- read_stars("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/lc/port_51740_lc_2018/port_51740_landcover_2018.tif")
-james_14 <- read_stars("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/lc/jame_51095_lc_2014/jame_51095_landcover_2014.tif")
-james_18 <- read_stars("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/lc/jame_51095_lc_2018/jame_51095_landcover_2018.tif")
+jame_14 <- read_stars("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/lc/jame_51095_lc_2014/jame_51095_landcover_2014.tif")
+jame_18 <- read_stars("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/lc/jame_51095_lc_2018/jame_51095_landcover_2018.tif")
 
-isle_14_10 <- read_stars("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/lc/islelc_14_10x10.tif")
+isle_14_10 <- read_stars("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/lc/isle_14_10.tif")
 isle_18_10 <- read_stars("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/lc/islelc_18_10x10.tif")
 
 # load all the boundary data 
 port_area <- st_read("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/boundary/portsmouth.shp")
-james_area <- st_read("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/boundary/James.shp")
+jame_area <- st_read("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/boundary/James.shp")
 isle_area <- st_read("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/boundary/Isle_of_Wight.shp")
 
 #############################################################################################################################
@@ -111,19 +110,19 @@ jame_14_10 <- st_warp(jame_14, cellsize = 10, crs = st_crs(jame_14))
 jame_18_10 <- st_warp(jame_18, cellsize = 10, crs = st_crs(jame_18))
 
 port_area <- port_area %>% 
-  st_transform(crs = st_crs(port_14))
+  st_transform(crs = st_crs(port_18))
 jame_area <- jame_area %>% 
-  st_transform(crs = st_crs(jame_14))
+  st_transform(crs = st_crs(jame_18))
 isle_area <- isle_area %>% 
-  st_transform(crs = st_crs(isle_14))
+  st_transform(crs = st_crs(isle_18_10))
 
 # Crop the resampled raster image to the test area
 port_14_10_crop <- st_crop(port_14_10, port_area)
 port_18_10_crop <- st_crop(port_18_10, port_area)
 jame_14_10_crop <- st_crop(jame_14_10, jame_area)
 jame_18_10_crop <- st_crop(jame_18_10, jame_area)
-isle_14_10_crop <- st_crop(isle_14, isle_area)
-isle_18_10_crop <- st_crop(isle_18, isle_area)
+isle_14_10_crop <- st_crop(isle_14_10, isle_area)
+isle_18_10_crop <- st_crop(isle_18_10, isle_area)
 
 
 # Create land cover change feature
@@ -240,7 +239,7 @@ get_county_data <- function(state, county, year) {
     geometry = TRUE,
     output = "wide"
   ) %>%
-    st_transform(st_crs(port_18)) %>%
+    st_transform(st_crs(port_14)) %>%
     rename(
       TotalPop = B01003_001E,
       Whites = B02001_002E,
@@ -306,15 +305,18 @@ dem_port <- st_crop (dem2, port_area)
 dem_port <- st_warp(dem_port, port_14)
 port_slope<- slope(dem_port)
 
+
 dem1 <- st_warp(dem1, crs=st_crs(jame_area))
 dem_james <- st_crop (dem1, jame_area)
 dem_james <- st_warp(dem_james, jame_18_10_crop)
 james_slope<- slope(dem_james)
 
-dem2 <- st_warp(dem, crs=st_crs(isle_14_10_rc))
+
+dem2 <- st_warp(dem, crs=st_crs(isle_18_10_rc))
 dem_isle <- st_crop (dem2, isle_area)
-dem_isle <- st_warp(dem_isle, isle_14_10_crop)
+dem_isle <- st_warp(dem_isle, isle_18_10_crop)
 isle_slope<- slope(dem_isle)
+
 rm(dem1,dem2,dem)
 
 #############################################################################################################################
@@ -353,7 +355,7 @@ soilclass <- soil%>%
     is.na(Report___8) ~ 0
   )) %>%
   dplyr::select(-colnames(soil),geometry)%>%
-  st_transform(st_crs(jame_14_10_rc))
+  st_transform(st_crs(jame_18_10_rc))
 
 soil_jame <- st_crop(soilclass, jame_area)
 
@@ -370,7 +372,7 @@ soilclass <- soil%>%
     is.na(isle__Ra_1) ~ 0
   )) %>%
   dplyr::select(-colnames(soil),geometry)%>%
-  st_transform(st_crs(isle_14_10_rc))
+  st_transform(st_crs(isle_18_10_rc))
 
 soil_isle <- st_crop(soilclass, isle_area)
 #############################################################################################################################
@@ -453,6 +455,7 @@ other_14_mean <- focal2(port_14_other["other"], matrix(1, 3, 3), "mean")
 other_14_mean <- focal2(other_14_mean["other"], matrix(1, 3, 3), "mean")
 other_18_mean <- focal2(port_18_other["other"], matrix(1, 3, 3), "mean")
 other_18_mean<- focal2(other_18_mean["other"], matrix(1, 3, 3), "mean")
+
 
 ## join all the data
 
@@ -569,7 +572,21 @@ other_14_mean <- focal2(other_14_mean["other"], matrix(1, 3, 3), "mean")
 other_18_mean <- focal2(jame_18_other["other"], matrix(1, 3, 3), "mean")
 other_18_mean<- focal2(other_18_mean["other"], matrix(1, 3, 3), "mean")
 
+
 ## join all the data
+
+port14 <- cbind(
+  as.data.frame(port_14_canopy)['canopy'],
+  as.data.frame(port_14_road)['road'],
+  as.data.frame(port_14_other)['other'],
+  as.data.frame(port_14_shrub)['shrub'],
+  as.data.frame(port_14_water)['water'],
+  as.data.frame(port_14_pcnt_imperv)['lc'] %>%
+    rename(imperv = lc ),
+  as.data.frame(port_change_rc)['lc']%>%
+    rename(lcchange = lc )
+)
+
 
 jame14 <- cbind(
   as.data.frame(canopy_14_mean)['canopy'],
@@ -621,7 +638,7 @@ jame18_df <-
   na.omit()
 
 saveRDS(jame14_df, "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/jame14_df.rds")
-saveRDS(jame18_df, "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/jame18_df.rds")
+saveRDS(jame18_df, "~/Github/Precision-Forecast/undecided/output/jame18_df.rds")
 
 #############################################################################################################################
 #############################################  --------------------  ########################################################
@@ -738,7 +755,7 @@ isle18_df <-
   na.omit()
 
 saveRDS(isle14_df, "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/isle14_df.rds")
-saveRDS(isle18_df, "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/isle18_df.rds")
+saveRDS(isle18_df, "~/Github/Precision-Forecast/undecided/output/isle18_df.rds")
 
 #########################################################################################################################################
 ###################################################  --------------------  ##############################################################
@@ -749,7 +766,11 @@ saveRDS(isle18_df, "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/outpu
 #########################################################################################################################################
 
 
-
+#############################################################################################################################
+#############################################  --------------------  ########################################################
+############################################# |   RF,XGB,GLM TEST  | ########################################################
+#############################################  --------------------  ########################################################
+#############################################################################################################################
 set.seed(717)
 
 
@@ -760,9 +781,247 @@ jame14_df <- readRDS( "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/ou
 port14_df <- readRDS( "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/port14_df.rds")
 
 
+  # Return results# Define function to apply modeling process to a dataset
+apply_model <- function(data) {
+  # Data preparation
+  data <- data %>% 
+    mutate(
+      lcre = case_when(lcchange == -1 ~ 0,
+                       lcchange == 1 ~ 1,
+                       lcchange == 0 ~ 0)
+    ) %>% 
+    mutate(
+      lcchange = as.factor(lcchange),
+      lcre = as.factor(lcre)
+    )
+  
+  # Sample data
+  balanced_data <-  data %>%
+         group_by(lcre) %>%
+         sample_n(min(table(data$lcre)), replace = FALSE)
+  
+  # Initial split for training and test
+  data_split <- initial_split(balanced_data, strata = "lcchange", prop = 0.75)
+  data_train <- training(data_split)
+  data_test <- testing(data_split)
+  
+  # Cross-validation
+  cv_splits_geo <- group_vfold_cv(data_train, group = "GEOID")
+  
+  # Create recipe
+  model_rec <- recipe(lcre ~ ., data = data_train) %>%
+    update_role(GEOID, new_role = "GEOID") %>%
+    update_role(lcchange, new_role = "lcchange") %>%
+    step_ns(x, y, options = list(df = 1))
+  
+  
+  
+  # Model specifications
+  glm_plan <- logistic_reg() %>%
+    set_engine("glmnet") %>%
+    set_mode("classification") %>%
+    set_args(
+      penalty = tune(), 
+      mixture =as.numeric(tune()))
+  
+  
+  rf_plan <- rand_forest() %>%
+    set_args(mtry  = tune()) %>%
+    set_args(min_n = tune()) %>%
+    set_args(trees = 1000) %>% 
+    set_engine("ranger", importance = "impurity") %>% 
+    set_mode("classification")
+  
+  
+  xgb_plan <- boost_tree() %>%
+    set_args(mtry  = tune()) %>%
+    set_args(min_n = tune()) %>%
+    set_args(trees = 100) %>% 
+    set_engine("xgboost") %>% 
+    set_mode("classification")
+  
+  # Modify the hyperparameter grid for each model
+  
+  glmnet_grid <- expand.grid(penalty = seq(0, 1, by = .25), 
+                             mixture = seq(0,1,0.25))
+  rf_grid <- expand.grid(mtry = c(2,5), 
+                         min_n = c(1,5))
+  xgb_grid <- expand.grid(mtry = c(3,5), 
+                          min_n = c(1,5))
+  
+  # Create the workflow
+  glm_wf <- workflow() %>% 
+    add_recipe(model_rec) %>% 
+    add_model(glm_plan)
+  
+  
+  rf_wf <-
+    workflow() %>% 
+    add_recipe(model_rec) %>% 
+    add_model(rf_plan)
+  
+  xgb_wf <-
+    workflow() %>% 
+    add_recipe(model_rec) %>% 
+    add_model(xgb_plan)
+  
+  # Tune hyperparameters
+  control <- control_resamples(save_pred = TRUE, verbose = TRUE)
+  metrics <- metric_set(f_meas)
+  
+  glm_tuned <- glm_wf %>%
+    tune_grid(resamples = cv_splits_geo,
+              grid      = glmnet_grid,
+              control = control,
+              metrics = metrics)
+  
+  
+  rf_tuned <- rf_wf %>%
+    tune::tune_grid(
+      resamples = cv_splits_geo,
+      grid      = rf_grid,
+      control   = control,
+      metrics   = metrics)
+  
+  
+  xgb_tuned <- xgb_wf %>%
+    tune::tune_grid(resamples = cv_splits_geo,
+                    grid      = rf_grid,
+                    control   = control,
+                    metrics   = metrics)
+  
+  # Select best model
+  glm_best_params <- select_best(glm_tuned, metric = "accuracy")
+  rf_best_params <- select_best(rf_tuned, metric = "accuracy")
+  xgb_best_params <- select_best(rf_tuned, metric = "accuracy")
+  glm_best_wf <- finalize_workflow(glm_wf, glm_best_params)
+  rf_best_wf <- finalize_workflow(rf_wf, rf_best_params)
+  xgb_best_wf <- finalize_workflow(xgb_wf, xgb_best_params)
+  
+  # Evaluate on test set
+  glm_val_fit_geo <- glm_best_wf %>% 
+    last_fit(split = data_split,
+             control = control,
+             metrics = metrics)
+  
+  rf_val_fit_geo <- rf_best_wf %>% 
+    last_fit(split = data_split,
+             control = control,
+             metrics = metrics)
+  
+  xgb_val_fit_geo <- xgb_best_wf %>% 
+    last_fit(split = data_split,
+             control = control,
+             metrics = metrics)
+  
+  # Show best model and its parameters
+  show_best(glm_tuned, metric = "accuracy")
+  show_best(rf_tuned, metric = "accuracy")
+  show_best(xgb_tuned, metric = "accuracy")
+  
+  return (list(glm_best_wf,rf_best_wf,xgb_best_wf), list(glm_val_fit_geo, rf_val_fit_geo, xgb_val_fit_geo))
+}
+
+
+# Apply model to datasets
+results_isle<- apply_model(isle14_df)
+results_port<- apply_model(port14_df)
+results_jame <- apply_model(jame14_df)
+
+# Evaluate three type of models--take port as example
+# Fit the best model to the whole dataset
+rf_fit <- fit(rf_best_wf, data = port14_df)
+
+port_predict14_rf <- predict(rf_fit, new_data = port14_df%>% 
+                               mutate(
+                                 lcchange = as.factor(lc)
+                               ), type = "prob")
+
+xgb_fit <- fit(xgb_best_wf, data = port14_df)
+
+port_predict14_xgb <- predict(xgb_fit, new_data = port14_df%>% 
+                                mutate(
+                                  lcchange = as.factor(lc)
+                                ), type = "prob")
+
+glm_fit <- fit(glm_best_wf, data = port14_df)
+
+port_predict14_glm <- predict(glm_fit, new_data = port14_test%>% 
+                                mutate(
+                                  lcchange = as.factor(lc)
+                                ), type = "prob")
+
+colnames(combined_df) <- c('rf','xgb','glm')
+
+make_predictions <- function(data, truedf,threshold) {
+  # make predictions with model
+  predictions <-  bind_cols(data, truedf)%>%
+    rename(prob=.pred_1)%>%
+    mutate(
+      .pred = case_when(
+        prob >= threshold ~ 1, 
+        prob < threshold ~ 0
+      ),
+      error = as.numeric(.pred) - as.numeric(lcre)
+    ) %>%
+    dplyr::select(lcre, .pred, x, y, prob,error) 
+  return(predictions)
+}
+
+# Fit the best model to the whole dataset
+port_predict14_glm<- make_predictions(port_predict14_glm, port14_df,0.5)
+port_predict14_xgb<- make_predictions(port_predict14_xgb, port14_df,0.5)
+port_predict14_rf<- make_predictions(port_predict14_rf, port14_df,0.5)
+
+# confusion Matrix Evaluation 
+caret::confusionMatrix(table(lcre = port_predict14_glm$lcre, pred = port_predict14_glm$.pred))
+caret::confusionMatrix(table(lcre = port_predict14_xgb$lcre, pred = port_predict14_xgb$.pred))
+caret::confusionMatrix(table(lcre = port_predict14_rf$lcre, pred = port_predict14_rf$.pred))
+
+save(port_predict14_glm,port_predict14_xgb,port_predict14_rf, file = 'port3model.Rdata' )
+## Base on `P-Value [Acc > NIR] : < 2.2e-16` perfomance for 3 models in 3 counties we select random forest model for tuning and refine
+
+
+# Plot error
+crs <- st_crs("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs")
+plot_stars <- function(data, variable) {
+  s <- st_as_stars(data,
+                   dimensions = st_dimensions(x = sort(unique(data$x)),
+                                              y = sort(unique(data$y)),
+                                              point = TRUE),
+                   dims = c('x', 'y'))
+  st_crs(s) <- crs
+  
+  plot(s[variable])
+}
+
+plot_stars(port_predict14_rf, '.pred')
+plot_stars(port_predict14_rf, 'error')
+
+# Feature importance
+imp <- importance(rf_full_mod$fit, type = 1)
+if (is.matrix(imp)) {
+  imp_df <- data.frame(variable = rownames(imp), importance = imp[, 1])
+} else {
+  imp_df <- data.frame(variable = names(imp), importance = imp)
+}
+
+
+ggplot(imp_df, aes(x = reorder(variable, importance), y = importance, fill = "#41b6c4", alpha=0.5)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_identity() +
+  labs(x = "Variable", y = "Importance") +
+  ggtitle("Variable Importance")
+
+#############################################################################################################################
+#############################################  --------------------  ########################################################
+############################################# |    RF Refining     | ########################################################
+#############################################  --------------------  ########################################################
+#############################################################################################################################
 
 # Data preparation
-data <- data %>% 
+data <- data%>% # replace data with isle14_df, jame14_df, port14_df 
   mutate(
     lcre = case_when(lcchange == -1 ~ 0,
                      lcchange == 1 ~ 1,
@@ -770,8 +1029,10 @@ data <- data %>%
   ) %>% 
   mutate(
     lcchange = as.factor(lcchange),
-    lcre = as.factor(lcre)
-  )
+    lcre = as.factor(lcre),
+    soil = as.factor(soil)
+  )%>%
+  filter(lc == 0)
 
 
 # Initial split for training and test
@@ -782,16 +1043,18 @@ data_test <- testing(data_split)
 apply_model_rf <- function(data) {
   # Sample data
   balanced_data <- data_train[c(sample(which(data_train$lcre == 0), sum(data_train$lcre == 1) *10) , which(data_train$lcre == 1)),]
+  balanced_data_sample <- sample_n(balanced_data,50000) # donot set seed to see the stability of models
   # Cross-validation
-  cv_splits_geo <- group_vfold_cv(balanced_data, group = "GEOID")
+  cv_splits_geo <- group_vfold_cv(balanced_data_sample, group = "GEOID")
   
   # Create recipe
-  model_rec <- recipe(lcre ~ ., data = balanced_data) %>%
+  model_rec <- recipe(lcre ~ ., data = balanced_data_sample) %>%
     update_role(GEOID, new_role = "GEOID") %>% #78
     update_role(lcchange, new_role = "lcchange") %>%
-    update_role(port_51740_landcover_2014.tif, new_role = "originallc") %>%
-    update_role(lc, new_role = "lc")# %>%
-  step_ns(x, y, options = list(df = 1))
+    update_role(originallc, new_role = "originallc") %>%
+    update_role(lc, new_role = "lc") %>%
+    update_role(imperv, new_role = "imperv") %>%
+    step_ns(x, y, options = list(df = 1))
   
   # Model specifications
   rf_plan <- rand_forest() %>%
@@ -831,28 +1094,130 @@ apply_model_rf <- function(data) {
 }
 
 # Fit multiple models
-num_models <- 5
+num_models <- 1 #if your computer let you do that
 predict_dfs <- list()
 rf_wfs <- list()
 for (i in 1:num_models) {
-  # Split data
-  rf_wf <- apply_model_rf(data_train)
   
-  # Make predictions
-  rf_full_wf <- rf_wf %>%
-    fit(data)
-  predict_df <-
-    predict(rf_full_wf , new_data = data, type = "prob")
-  # Add to list
-  predict_dfs[[i]] <- predict_df[2]
-  rf_wfs[[i]] <- rf_full_wf
+  rf_wf <- apply_model_rf(data_train)
+  # Fit model and make predictions
+  tryCatch({
+    
+    rf_full_wf <- rf_wf %>% fit(data)
+    predict_df <- predict(rf_full_wf, new_data = data, type = "prob")
+    
+    
+    # Add to list
+    predict_dfs[[i]] <- predict_df[2]
+    rf_wfs[[i]] <- rf_full_wf
+    
+    # Save model and predictions
+    save(rf_wfs, rf_full_wf, predict_dfs, file = "model_results.RData")
+  }, error = function(e) {
+    message("Code stopped running due to time limit exceeded.")
+    message("Saving fitted model.")
+    save(rf_wf, rf_full_wf, file = "fitted_model.RData")
+  })
+  
+  
+}
+# Stop the parallel back end
+stopCluster(cl)
+
+# Cross validate spatially and analyze the error outcome
+rf_val_fit_geo <- rf_full_wf %>% 
+  last_fit(split     = data_split,
+           control   = control,
+           metrics   = metrics, type = "prob")
+
+rf_val_pred_geo     <- collect_predictions(rf_val_fit_geo)
+
+val_preds <- rf_val_pred_geo%>% 
+  left_join(., data_test %>% 
+              rowid_to_column(var = ".row") %>% 
+              dplyr::select(x,y, GEOID, .row), 
+            by = ".row") %>% 
+  mutate(RMSE = yardstick::rmse_vec( as.numeric(lcre),as.numeric(.pred_class)),
+         MAE  = yardstick::mae_vec( as.numeric(lcre), as.numeric(.pred_class)),
+         MAPE = yardstick::mape_vec( as.numeric(lcre), as.numeric(.pred_class)
+         )) %>% 
+  ungroup() 
+
+#############################################################################################################################
+#############################################  --------------------  ########################################################
+############################################# |    RF Evaluation   | ########################################################
+#############################################  --------------------  ########################################################
+#############################################################################################################################
+
+## Take Portsmouth as example
+port_test_nonf <- bind_cols(predict_dfs[[1]],port14_df)%>%rename(prob  = .pred_1)
+make_predictions <- function(data, threshold) {
+  # make predictions with model
+  predictions <- data %>%
+    mutate(
+      .pred = case_when(
+        prob >= threshold ~ 1, 
+        prob < threshold ~ 0
+      ),
+      error = as.numeric(.pred) - as.numeric(lcre)
+    ) %>%
+    dplyr::select(lcre, .pred, x, y, prob,error) 
+  return(predictions)
 }
 
+crs <- st_crs("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs")
+plot_stars <- function(data, variable) {
+  s <- st_as_stars(pred_0.5_m1,
+                   dimensions = st_dimensions(x = sort(unique(data$x)),
+                                              y = sort(unique(data$y)),
+                                              point = TRUE),
+                   dims = c('x', 'y'))
+  st_crs(s) <- crs
+  
+  plot(s[variable])
+}
 
-# Apply model to three different datasets
-results_isle<- apply_model(isle14_df)
-results_port<- apply_model(port14_df)
-results_jame <- apply_model(jame14_df)
+# Plot the density distribution of the outcome
+ggplot(port_test_pred1, aes(x = prob*1000, fill = as.factor(lcre))) + 
+  geom_density() +
+  facet_grid(lcre ~ .)  + xlim(0, 1)+
+  scale_fill_manual(values = palette2) +
+  labs(x = "Wildfire", y = "Density of probabilities",
+       title = "Distribution of predicted probabilities by observed outcome",
+       subtitle = "James RF Model 1:10") +plotTheme() 
+
+
+roc_obj <- roc(jame_test_pred2$lcre, jame_test_pred2$prob)
+ggroc(roc_obj)
+
+# Plot the feature importance
+ggplot(imp_df, aes(x = reorder(Variable, Importance), y = Importance, fill = "#41b6c4", alpha=0.5)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_identity() +
+  labs(x = "Variable", y = "Importance", subtitle = "POrtmouth downsample 1:10") +
+  ggtitle("Variable Importance") +plotTheme()
+
+# Evaluate the confusion matrix
+caret::confusionMatrix(table(lcre = port_test_pred1$lcre, pred = port_test_pred1$.pred))
+
+# Evaluate the geo cross validate error between block groups
+# aggregate val error to Neighborhood 
+val_MAPE_by_hood <- val_preds %>% 
+  group_by(GEOID) %>% 
+  summarise(RMSE = yardstick::rmse_vec(lcre, .pred),
+            MAE  = yardstick::mae_vec(lcre, .pred),
+            MAPE = yardstick::mape_vec(lcre, .pred)) %>% 
+  ungroup() 
+
+# plot MAPE by Hood
+ggplot(val_MAPE_by_hood, aes(x = reorder(GEOID, MAPE), y = MAPE)) +
+  geom_bar(stat = "identity", fill = "#41b6c4",alpha =0.7) +
+  scale_y_continuous(breaks = seq(0,10,1)) +
+  labs(x = "Blockgroups GEOID",
+       title = "Distribution of MAPE by Geo Validation Set",
+       subtitle = "Port RF Model 1:10") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 5))+plotTheme()
 
 #########################################################################################################################################
 ###################################################  --------------------  ##############################################################
@@ -871,57 +1236,47 @@ jame18_df <- readRDS("~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/out
 ############################################# |      JAME CITY     | ########################################################
 #############################################  --------------------  ########################################################
 #############################################################################################################################
-# Fit the best model to the whole dataset
-full_fit_rf <- results_jame[1][2]%>%
-  fit(data = jame14_df)
 
-# See the prediction for the full dataset
-predict_df <- predict(full_fit_rf, new_data = jame14_df)
-predict_df2 <- cbind(jame14_df,predict_df) %>%
-  mutate(error = as.numeric(.pred_class) - as.numeric(lcre))
 
 # Use the best model to predict for the future
-predict_df3 <- predict(full_fit_rf, new_data = jame18_df %>% mutate(lcchange = as.factor(lc)))
-predict_df3 <- cbind(jame18_df,predict_df3) 
-saveRDS(predict_df3,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/predict_DF3_jame.rds')
+jame_predict <- predict(rf_full_wf, new_data = jame18_df%>% 
+                          mutate(
+                            lcchange = as.factor(originallc),
+                            soil = as.factor(soil)
+                          )%>%
+                          filter(lc == 0), type = "prob")
+predict_df <- cbind(jame18_df%>%
+                      filter(lc == 0),jame_predict) 
+saveRDS(predict_df,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/jame_predict.rds')
 
 # extract final model object
-rf_full_mod <- extract_fit_parsnip(full_fit_rf)
+rf_full_mod <- extract_fit_parsnip(rf_full_wf)
 saveRDS(rf_full_mod,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/best_rf1_jame.rds')
 
-imp <- importance(rf_full_mod$fit, type = 1)
-if (is.matrix(imp)) {
-  imp_df <- data.frame(variable = rownames(imp), importance = imp[, 1])
-} else {
-  imp_df <- data.frame(variable = names(imp), importance = imp)
-}
 
-
-ggplot(imp_df, aes(x = reorder(variable, importance), y = importance, fill = "#41b6c4", alpha=0.5)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  scale_fill_identity() +
-  labs(x = "Variable", y = "Importance") +
-  ggtitle("Variable Importance")
 #############################################################################################################################
 #############################################  --------------------  ########################################################
 ############################################# |      PORTMOUTH     | ########################################################
 #############################################  --------------------  ########################################################
 #############################################################################################################################
 
-# Fit the best model to the whole dataset
-full_fit_rf <- results_port[1][2]%>%
-  fit(data = port14_df)
-
-# See the prediction for the full dataset
-predict_df <- predict(full_fit_rf, new_data = port14_df)
-predict_df2 <- cbind(port14_df,predict_df) %>%
-  mutate(error = as.numeric(.pred_class) - as.numeric(lcre))
 
 # Use the best model to predict for the future
-predict_df3 <- predict(full_fit_rf, new_data = port18_df %>% mutate(lcchange = as.factor(lc)))
-predict_df3 <- cbind(port18_df,predict_df3) 
-saveRDS(predict_df3,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/predict_DF3_port.rds')
+port_predict <- predict(rf_full_wf, new_data = port18_df%>% 
+                          mutate(
+                            lcchange = as.factor(originallc),
+                            soil = as.factor(soil)
+                          )%>%
+                          filter(lc == 0), type = "prob")
+predict_df <- cbind(port18_df%>%
+                      filter(lc == 0) %>%
+                      rename(originallc = port_51740_landcover_2018.tif)%>%
+                      dplyr::select(originallc,x,y),
+                    port_predict%>%
+                      rename(probability = .pred_1) %>%
+                      dplyr::select(probability)) 
+saveRDS(predict_df,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/port_predict.rds')
+
 
 # extract final model object
 rf_full_mod <- extract_fit_parsnip(full_fit_rf)
@@ -932,35 +1287,179 @@ saveRDS(rf_full_mod,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/outp
 ############################################# |   ISLE OF WIGHT    | ########################################################
 #############################################  --------------------  ########################################################
 #############################################################################################################################
-# Fit the best model to the whole dataset
-full_fit_rf <- results_jame[1][2]%>%
-  fit(data = port14_df)
 
-# See the prediction for the full dataset
-predict_df <- predict(full_fit_rf, new_data = isle14_df)
-predict_df2 <- cbind(isle14_df,predict_df) %>%
-  mutate(error = as.numeric(.pred_class) - as.numeric(lcre))
 
 # Use the best model to predict for the future
-predict_df3 <- predict(full_fit_rf, new_data = isle18_df %>% mutate(lcchange = as.factor(lc)))
-predict_df3 <- cbind(isle18_df,predict_df3) 
-saveRDS(predict_df3,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/predict_DF3_isle.rds')
+isle_predict <- predict(rf_full_wf, new_data = isle18_df%>% 
+                          mutate(
+                            lcchange = as.factor(originallc),
+                            soil = as.factor(soil)
+                          )%>%
+                          filter(lc == 0), type = "prob")
+predict_df <- cbind(isle18_df,isle_predict) 
+saveRDS(predict_df,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/isle_predict.rds')
 
 # extract final model object
 rf_full_mod <- extract_fit_parsnip(full_fit_rf)
 saveRDS(rf_full_mod,'~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/best_rf1_isle.rds')
 
+
 #########################################################################################################################################
 ###################################################  --------------------  ##############################################################
 ################################################### |                    | ##############################################################
-################################################### |      MAPPING       | ##############################################################
+################################################### |      PLOTING       | ##############################################################
 ################################################### |                    | ##############################################################
 ###################################################  --------------------  ##############################################################
 #########################################################################################################################################
 
+#############################################################################################################################
+#############################################  --------------------  ########################################################
+############################################# | EXPLORATORY DATA ANALYSIS | ########################################################
+#############################################  --------------------  ########################################################
+#############################################################################################################################
 
-predict_df2<- readRDS('~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/predict_DF3_port.rds')
-s <- st_as_stars(predict_df2,
+# plot for the original landcover type
+tm_shape(isle_area) +
+  tm_fill("grey90",alpha = 0.2) +
+  tm_borders(col = 'grey')+
+  tm_shape(isle_change[c(2)]) +
+  tm_raster(palette = palette10[c(1,9)],legend.hist = FALSE)  +
+  tm_layout(legend.outside.size = 0.2,
+            inner.margins=c(.1,.1, .1,0.01),
+            panel.labels = c('Change'),
+            panel.label.bg.color = 'white',
+            panel.label.size = 1.5,
+            legend.outside.position	= "right")
+
+#############################################################################################################################
+#############################################  --------------------  ########################################################
+############################################# | SET THRESHOLD FOR RESULT | ########################################################
+#############################################  --------------------  ########################################################
+#############################################################################################################################
+
+threshold_data <- `predict14-portrf` %>%
+  threshold_perf(lcre, prob, thresholds = seq(0, 0.1, by = 0.005))
+
+threshold_data <- threshold_data %>%
+  filter(.metric != "distance") %>%
+  filter(.metric != "j_index")%>%
+  mutate(group = case_when(
+    .metric == "sens" | .metric == "spec" ~ "1",
+    TRUE ~ "2"
+  ))
+threshold <- 0.045
+
+ggplot(threshold_data, aes(x = .threshold, y = .estimate, color = .metric)) +
+  geom_line() +
+  theme_minimal() +
+  scale_color_viridis_d(end = 0.9) +
+  scale_alpha_manual(values = c(.4, 1), guide = "none") +
+  geom_vline(xintercept = threshold, alpha = .6, color = "grey30") +
+  labs(
+    x = "Threshold\n(where sens and spec get intersected is considered 'good')",
+    y = "Metric Estimate",
+    title = "Balancing performance by varying the threshold",
+    subtitle = "Portmouth\nVertical line = Selected threshold"
+  ) + plotTheme()
+
+#############################################################################################################################
+#############################################  --------------------  ########################################################
+############################################# | PLOT THE RESULTS  | ########################################################
+#############################################  --------------------  ########################################################
+#############################################################################################################################
+
+
+# plot the whole county
+selected<-  tm_shape(x_14) +
+  tm_borders(lwd=0.1) 
+selected18<-  tm_shape(x_18) +
+  tm_borders(lwd=0.1)
+map3 <-tm_shape(s18['.pred_1']) +
+  tm_raster(palette = c("#ffffcc","#41b6c4","#2c7fb8","#253494"), style = "pretty") +
+  tm_layout(legend.outside = TRUE) +
+  tm_layout(legend.outside.size = 0.2,
+            inner.margins = c(0.01, 0.01, 0.1, 0.01),
+            panel.labels = c('Predicted 2021'),
+            panel.label.bg.color = "white",
+            panel.label.size = 1,
+            legend.outside.position = "right",
+            frame = FALSE) 
+map2 <-tm_shape(s['prob']) +
+  tm_raster(palette = c("#ffffcc","#41b6c4","#2c7fb8","#253494"), style = "pretty") +
+  tm_layout(legend.outside = TRUE) +
+  tm_layout(legend.outside.size = 0.2,
+            inner.margins = c(0.01, 0.01, 0.1, 0.01),
+            panel.labels = c('Predicted 2014'),
+            panel.label.bg.color = "white",
+            panel.label.size = 1,
+            legend.outside.position = "right",
+            frame = FALSE) 
+
+map1 <-tm_shape(s['lcre']) +
+  tm_raster(palette = c("#ffffcc","#41b6c4","#2c7fb8","#253494"), style = "pretty") +
+  tm_layout(legend.outside = TRUE) +
+  tm_layout(legend.outside.size = 0.2,
+            inner.margins = c(0.01, 0.01, 0.1, 0.01),
+            panel.labels = c('Observed Change 14-18'),
+            panel.label.bg.color = "white",
+            panel.label.size = 1,
+            legend.outside.position = "right",
+            frame = FALSE) 
+tmap_arrange(map1, map2 + selected, map3+ selected18, ncol = 3)
+
+
+
+selected<-  tm_shape(x_sample14) +
+  tm_polygons(borders.alpha = 1, borders.col = c("#253494"),
+              alpha = 0.0, style = "cont")
+selected18<-  tm_shape(x_sample18) +
+  tm_polygons(borders.alpha = 1, borders.col = c("#253494"),
+              alpha = 0.0, style = "cont")
+
+map1 <-tm_shape(sample_data14[c(19)]) +
+  tm_raster(palette = c("#ffffcc","#253494")) +
+  tm_layout(legend.outside = TRUE) +
+  tm_layout(legend.outside.size = 0.2,
+            inner.margins=c(.01,.01, .1,0.01),
+            panel.labels = c('Observed Change 14-18'),
+            panel.label.bg.color = 'white',
+            panel.label.size = 1,
+            legend.outside.position	= "bottom",
+            frame = FALSE)
+map2 <-tm_shape(sample_data14['prob']) +
+  tm_raster(palette = c("#ffffcc","#41b6c4","#2c7fb8","#253494"), style = "pretty") +
+  #tm_facets(ncol = 3) +
+  tm_layout(legend.outside = TRUE) +
+  tm_layout(legend.outside.size = 0.2,
+            inner.margins=c(.01,.01, .1,0.01),
+            panel.labels = c('Predicted 2018'),
+            panel.label.bg.color = 'white',
+            panel.label.size = 1,
+            legend.outside.position	= "bottom",
+            frame = FALSE)
+map3 <- tm_shape(sample_data21['.pred_1']) +
+  tm_raster(palette =c("#ffffcc","#41b6c4","#2c7fb8","#253494"), style = "pretty") +
+  # tm_facets(ncol = 3) +
+  tm_layout(legend.outside = TRUE) +
+  tm_layout(legend.outside.size = 0.2,
+            inner.margins=c(.01,.01, .1,0.01),
+            panel.labels = c('Predicted 2021'),
+            panel.label.bg.color = 'white',
+            panel.label.size = 1,
+            legend.outside.position	="bottom",
+            frame = FALSE)
+tmap_arrange(map1, map2 + selected, map3+ selected18, ncol = 3)
+
+#########################################################################################################################################
+###################################################  --------------------  ##############################################################
+################################################### |                    | ##############################################################
+################################################### |      EXPORT        | ##############################################################
+################################################### |                    | ##############################################################
+###################################################  --------------------  ##############################################################
+#########################################################################################################################################
+
+# transfer the predicted data to star object for ploting
+s <- st_as_stars(data,
                  dimensions=st_dimensions(
                    x=sort(unique(df$x)),
                    y=sort(unique(df$y)), 
@@ -969,35 +1468,15 @@ s <- st_as_stars(predict_df2,
 st_crs(s) <- st_crs(port_14)
 s <- s%>%
   st_transform(4326)
-x <- s['.pred_class']
-x.or <-s['lcre']
-error <- s['error']
-thresh_value <- 1
-x[x != thresh_value] <- NA
-x_sf <- st_union(st_as_sf(x))
-# write the sf object to a GeoJSON file
-geojson_path <- "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/port_predict_xgb.geojson"
-st_write(x_sf, geojson_path)
+x <- s['probability']
 
-
-
-predict_df2<- readRDS('~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/predict_DF3_port.rds')
-s <- st_as_stars(predict_df2,
-                 dimensions=st_dimensions(
-                   x=sort(unique(df$x)),
-                   y=sort(unique(df$y)), 
-                   point=TRUE),
-                 dims=c('x','y'))
 st_crs(s) <- st_crs(port_18)
-s <- s%>%
-  st_transform(4326)
-x <- s['.pred_class']
-x.or <-s['lcre']
-error <- s['error']
-thresh_value <- 1
-x[x != thresh_value] <- NA
+x[x < threshold] <- NA
 x_sf <- st_union(st_as_sf(x))
-# write the sf object to a GeoJSON file
-geojson_path <- "~/Github/Precision-Forecasts-of-Land-Cover-Change/Data/output/port_test_4326.geojson"
-st_write(x_sf, geojson_path)
+x_c <- st_crop(s,x_sf)
+
+
+# write the selected threshold area star object to a GeoJSON file
+geojson_path <- "~/Github/Precision-Forecasts-of-Land-Cover-Change/undecided/output/port_predict-crop.geojson"
+st_write(x_c, geojson_path)
 
